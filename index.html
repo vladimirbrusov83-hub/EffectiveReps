@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EEE9DF">
+<title>Effective Reps Estimator | Brusov Coach</title>
+<meta name="description" content="Log a set as reps and RIR and see effective reps per muscle group for the session. Free training tool from strength coach Vladimir Brusov.">
+<link rel="canonical" href="https://brusovcoach.org/effective-reps.html">
+<meta property="og:title" content="Effective Reps Estimator">
+<meta property="og:description" content="Log reps and RIR, see effective reps per muscle group for the session.">
+<meta property="og:url" content="https://brusovcoach.org/effective-reps.html">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------ tokens
+   Palette follows brusovcoach.org (red #C8102E, Bebas Neue) but on a light
+   warm neutral, not the site's black: this is read at arm's length under gym
+   lights. Bebas carries the brand and the big numerals; Inter carries every
+   label, button and line of UI; JetBrains Mono carries tabular data. */
+:root{
+  --bg:#EEE9DF; --panel:#FFFDF9; --panel2:#F3EFE6; --panel3:#E6E0D3;
+  --line:#D9D2C3; --line2:#C9C1B0;
+  --ink:#16140F; --ink2:#3D372E; --dim:#655C50; --faint:#7A7164;
+  --accent:#C8102E; --accent-dark:#9F0C24; --accent-tint:#FBE9EC;
+  --green:#1B6E3A; --green-tint:#E3F1E7;
+  --amber:#8A5A00; --amber-tint:#F8EBCF;
+  --red:#A4132D;  --red-tint:#FBE4E7;
+  --focus:#1F5FBF;
+  --r-sm:8px; --r:12px; --r-lg:16px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px;
+  --ui:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --disp:"Bebas Neue",Impact,"Arial Narrow",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --z-sticky:10; --z-toast:20; --z-scrim:30; --z-sheet:31;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--ui);
+  font-size:15px; line-height:1.45;
+  padding-bottom:calc(var(--s8) + env(safe-area-inset-bottom,0));
+  -webkit-text-size-adjust:100%; overscroll-behavior-y:none;
+  font-feature-settings:"tnum" 1,"cv11" 1;
+}
+button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.disp{font-family:var(--disp);letter-spacing:.02em;font-weight:400}
+
+/* --------------------------------------------------------------- app shell */
+.wrap{max-width:520px;margin:0 auto;padding:0 var(--s4)}
+@media (min-width:900px){
+  .wrap{max-width:1040px;display:grid;grid-template-columns:440px 1fr;
+    column-gap:var(--s8);align-items:start}
+  .wrap > .top, .wrap > .days, .wrap > .msgs{grid-column:1 / -1}
+  .wrap > footer{grid-column:1 / -1}
+}
+/* pin the entry panel only when the whole panel fits on screen; on a shorter
+   laptop a pinned panel hides the RIR row and Log button while you scroll sets */
+@media (min-width:900px) and (min-height:1020px){
+  .col-left{position:sticky;top:var(--s4)}
+}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  padding:calc(var(--s4) + env(safe-area-inset-top,0)) 0 var(--s3)}
+.brand{display:flex;align-items:center;gap:var(--s3);text-decoration:none;color:inherit}
+.brand .mark{width:36px;height:36px;border-radius:9px;background:var(--accent);color:#fff;
+  font-family:var(--disp);font-size:20px;display:flex;align-items:center;justify-content:center;
+  letter-spacing:.02em;flex:0 0 auto}
+.brand h1{margin:0;font-family:var(--disp);font-size:26px;line-height:1;letter-spacing:.03em;
+  text-transform:uppercase}
+.brand h1 em{font-style:normal;color:var(--accent)}
+.brand small{display:block;font-family:var(--ui);font-size:12px;white-space:nowrap;color:var(--dim);
+  text-transform:none;letter-spacing:0;margin-top:3px;font-weight:500}
+.histbtn{display:inline-flex;align-items:center;gap:var(--s2);min-height:40px;padding:0 var(--s3) 0 var(--s3);
+  border:1px solid var(--line);background:var(--panel);border-radius:999px;
+  font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap;
+  transition:background .15s var(--ease),border-color .15s var(--ease)}
+.histbtn:hover{background:var(--panel2);border-color:var(--line2)}
+.histbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* day strip — the last seven days, today on the right */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--s2);margin-bottom:var(--s4)}
+.day{min-height:60px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:background .15s var(--ease),border-color .15s var(--ease),transform .15s var(--ease)}
+.day:active{transform:scale(.97)}
+.day .wd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.day .dn{font-family:var(--disp);font-size:22px;line-height:1;color:var(--ink)}
+.day .dot{width:6px;height:6px;border-radius:50%;background:transparent;margin-top:2px}
+.day.has .dot{background:var(--accent)}
+.day.on{background:var(--ink);border-color:var(--ink)}
+.day.on .wd{color:#CFC8BA}.day.on .dn{color:#fff}.day.on.has .dot{background:#fff}
+.day.today:not(.on){border-color:var(--ink2)}
+
+/* ---------------------------------------------------------------- panels */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:var(--s4);margin-bottom:var(--s4);
+  box-shadow:0 1px 0 rgba(22,20,15,.03),0 6px 18px -12px rgba(22,20,15,.18)}
+.card h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink2);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.card h2 .meta{font-weight:500;color:var(--faint);font-size:12px}
+.step{display:flex;align-items:center;gap:var(--s2);font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:var(--s2)}
+.step .k{width:20px;height:20px;border-radius:50%;background:var(--panel3);color:var(--ink2);
+  font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
+.step .hint{font-weight:400;color:var(--faint);margin-left:auto;font-size:12px}
+.sec + .sec{margin-top:var(--s5)}
+
+/* ----------------------------------------------------------------- chips */
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+.chip{position:relative;min-height:50px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--panel2);color:var(--ink2);font-size:14px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;padding:var(--s1) var(--s2);
+  transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .12s var(--ease)}
+.chip:hover{border-color:var(--line2)}
+.chip:active{transform:scale(.97)}
+.chip.on{background:var(--accent);border-color:var(--accent-dark);color:#fff}
+.chip .n{position:absolute;top:-7px;right:-4px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;
+  background:var(--ink);color:#fff;font-family:var(--mono);font-size:11px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--panel)}
+.chip.on .n{background:var(--ink)}
+
+/* ---------------------------------------------------------------- keypad */
+.repsbox{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  padding:var(--s2) var(--s3);border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);
+  margin-bottom:var(--s2)}
+.repsval{font-family:var(--disp);font-size:56px;line-height:.9;color:var(--ink);min-width:2ch;text-align:right;
+  font-variant-numeric:tabular-nums;padding-right:var(--s1)}
+.repsval.blank{color:var(--line2)}
+.repslbl{font-size:13px;color:var(--dim);font-weight:500}
+.repslbl b{display:block;color:var(--ink);font-weight:600;font-size:14px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
+.key{min-height:52px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);
+  font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s var(--ease),transform .12s var(--ease)}
+.key:hover{background:var(--panel2)}
+.key:active{background:var(--panel3);transform:scale(.97)}
+.key.fn{font-family:var(--ui);font-size:14px;font-weight:600;color:var(--dim);background:var(--panel2)}
+.key svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.rirrow{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--s2)}
+.rir{min-height:52px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  color:var(--ink2);transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .12s var(--ease)}
+.rir:active{transform:scale(.97)}
+.rir .v{font-family:var(--mono);font-size:20px;font-weight:500;line-height:1}
+.rir .s{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--faint)}
+.rir.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.rir.on .s{color:#CFC8BA}
+.rir.dead{border-style:dashed}
+.rir.on.dead{background:var(--dim);border-color:var(--dim);border-style:solid}
+.rirnote{display:flex;justify-content:space-between;margin-top:var(--s2);font-size:12px;color:var(--faint)}
+
+/* rest-pause switch + the two-field reps box it opens */
+.rprow{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  width:100%;min-height:48px;margin-top:var(--s4);padding:var(--s2) var(--s3);
+  border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);text-align:left}
+.rprow .t{font-size:14px;font-weight:600;color:var(--ink)}
+.rprow .t small{display:block;font-size:12px;font-weight:400;color:var(--faint);margin-top:1px}
+.sw{position:relative;width:44px;height:26px;border-radius:13px;background:var(--line2);flex:0 0 auto;
+  transition:background .15s var(--ease)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(22,20,15,.3);transition:transform .15s var(--ease)}
+.rprow[aria-checked="true"]{border-color:var(--accent-dark);background:var(--accent-tint)}
+.rprow[aria-checked="true"] .sw{background:var(--accent)}
+.rprow[aria-checked="true"] .sw::after{transform:translateX(18px)}
+.rprow + .sec{margin-top:var(--s4)}
+.rpboxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);margin-bottom:var(--s2)}
+.rpboxes .repsbox{margin:0;width:100%;text-align:left}
+.rpboxes .repsbox.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--panel)}
+.rpboxes .repsval{font-size:44px}
+
+.log{width:100%;min-height:56px;margin-top:var(--s5);border-radius:var(--r);
+  background:var(--accent);color:#fff;font-size:16px;font-weight:600;letter-spacing:.01em;
+  display:flex;align-items:center;justify-content:center;gap:var(--s3);
+  transition:background .15s var(--ease),transform .12s var(--ease),box-shadow .15s var(--ease);
+  box-shadow:0 6px 14px -8px rgba(200,16,46,.55)}
+.log:hover{background:var(--accent-dark)}
+.log:active{transform:scale(.985)}
+.log[disabled]{background:var(--panel2);color:var(--faint);border:1px solid var(--line);box-shadow:none;cursor:default}
+.log.dead{background:var(--dim);box-shadow:none}
+.log .pill{font-family:var(--mono);font-size:13px;font-weight:500;background:rgba(255,255,255,.18);
+  padding:3px 8px;border-radius:999px}
+.log[disabled] .pill{display:none}
+
+/* ---------------------------------------------------------------- totals */
+.tot{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s3);
+  padding:var(--s3) 0 var(--s4);border-bottom:1px solid var(--line)}
+.tot .big{font-family:var(--disp);font-size:48px;line-height:.85;color:var(--ink)}
+.tot .lbl{font-size:13px;color:var(--dim);font-weight:500;margin-top:var(--s1)}
+.tot .side{text-align:right;font-size:13px;color:var(--dim);line-height:1.5}
+.tot .side b{color:var(--ink);font-weight:600}
+.mrow{display:grid;grid-template-columns:1fr auto;grid-template-areas:"name er" "bar bar" "foot foot";
+  row-gap:var(--s2);column-gap:var(--s3);padding:var(--s4) 0;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mname{grid-area:name;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:var(--s2)}
+.badge{font-size:11px;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:999px;
+  background:var(--panel3);color:var(--ink2)}
+.b-below .badge{background:var(--red-tint);color:var(--red)}
+.b-low .badge{background:var(--amber-tint);color:var(--amber)}
+.b-in .badge{background:var(--green-tint);color:var(--green)}
+.b-above .badge{background:var(--amber-tint);color:var(--amber)}
+.mer{grid-area:er;display:flex;align-items:baseline;gap:var(--s1);justify-self:end}
+.mer .v{font-family:var(--disp);font-size:30px;line-height:.9;color:var(--ink)}
+.mer .u{font-size:12px;color:var(--faint);font-weight:500}
+.mer .sets{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:var(--s2)}
+/* track: 0–50 scale; the 20–40 target zone is drawn on the track itself */
+.track{grid-area:bar;position:relative;height:10px;border-radius:5px;background:var(--panel3);overflow:hidden}
+.track .zone{position:absolute;top:0;bottom:0;left:40%;width:40%;background:rgba(27,110,58,.16)}
+.track .fill{position:absolute;top:0;bottom:0;left:0;width:100%;border-radius:5px;background:var(--faint);
+  transform-origin:left center;transition:transform .3s var(--ease)}
+.b-below .fill{background:var(--red)} .b-low .fill{background:var(--amber)}
+.b-in .fill{background:var(--green)} .b-above .fill{background:var(--amber)}
+.mfoot{grid-area:foot;position:relative;height:14px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.mfoot span{position:absolute;top:0;transform:translateX(-50%)}
+.mfoot .t20{left:40%}.mfoot .t40{left:80%}.mfoot .t0{left:0;transform:none}.mfoot .t50{right:0;transform:none}
+
+.empty{padding:var(--s6) var(--s3);text-align:center;color:var(--dim);font-size:14px;line-height:1.5}
+.empty b{display:block;color:var(--ink);font-weight:600;margin-bottom:var(--s1);font-size:15px}
+
+/* ------------------------------------------------------------------- sets */
+.setlist{margin:var(--s3) 0 0}
+.setrow{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:var(--s3);
+  min-height:52px;padding:var(--s2) 0;border-top:1px solid var(--line)}
+.setrow:first-child{border-top:0}
+.setrow .idx{font-family:var(--mono);font-size:12px;color:var(--faint);min-width:2ch;text-align:right}
+.setrow .what{display:flex;flex-direction:column;gap:1px;min-width:0}
+.setrow .m{font-size:14px;font-weight:600;color:var(--ink)}
+.setrow .d{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.setrow .er{font-family:var(--disp);font-size:24px;line-height:.9;color:var(--accent);min-width:3ch;text-align:right}
+.setrow.dead .er{color:var(--faint);font-family:var(--mono);font-size:14px}
+.setrow .er small{font-family:var(--ui);font-size:11px;color:var(--faint);margin-left:3px;font-weight:500}
+.del{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--faint);border:1px solid transparent;transition:background .12s var(--ease),color .12s var(--ease),border-color .12s var(--ease)}
+.del:hover{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+.del svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.del:disabled{visibility:hidden}
+
+/* clear today — two steps, because one tap must never cost a workout */
+.clearbtn{width:100%;min-height:48px;margin-top:var(--s4);border:1px solid #E7B2BB;border-radius:var(--r);
+  background:var(--red-tint);font-size:14px;font-weight:600;color:var(--red);
+  display:flex;align-items:center;justify-content:center;gap:var(--s2);
+  transition:background .15s var(--ease),border-color .15s var(--ease)}
+.clearbtn:hover{background:#F7D3D9;border-color:var(--red)}
+.confirm{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s3);border-top:1px solid var(--line);padding-top:var(--s3)}
+.confirm .q{flex:1;font-size:14px;color:var(--ink)}
+.btn{min-height:44px;padding:0 var(--s4);border-radius:var(--r-sm);font-size:14px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
+  border:1px solid var(--line);background:var(--panel2);color:var(--ink2);
+  transition:background .12s var(--ease),border-color .12s var(--ease)}
+.btn:hover{background:var(--panel3);border-color:var(--line2)}
+.btn.primary{background:var(--accent);border-color:var(--accent-dark);color:#fff}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn.block{width:100%}
+
+/* ------------------------------------------------------------------ sheet */
+.scrim{position:fixed;inset:0;background:rgba(22,20,15,.5);z-index:var(--z-scrim);
+  display:flex;align-items:flex-end;justify-content:center;animation:fade .2s var(--ease)}
+.sheet{width:100%;max-width:520px;max-height:84vh;overflow:auto;z-index:var(--z-sheet);
+  background:var(--panel);border:1px solid var(--line);border-bottom:0;
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+  padding:var(--s3) var(--s4) calc(var(--s4) + env(safe-area-inset-bottom,0));
+  box-shadow:0 -8px 30px rgba(22,20,15,.18);animation:rise .25s var(--ease)}
+@media (min-width:900px){
+  .scrim{align-items:center}
+  .sheet{border-radius:var(--r-lg);border-bottom:1px solid var(--line);animation:fade .2s var(--ease)}
+}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto var(--s3)}
+.sheet h2{margin:0 0 var(--s3);font-size:17px;font-weight:600;color:var(--ink)}
+.dayrow{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  width:100%;text-align:left;padding:var(--s3) 0;border-top:1px solid var(--line);min-height:56px}
+.dayrow .d{font-size:15px;font-weight:600;color:var(--ink)}
+.dayrow .s{font-size:12px;color:var(--faint);margin-top:1px}
+.dayrow .r{font-family:var(--mono);font-size:13px;color:var(--dim);text-align:right}
+.dayrow .r b{color:var(--ink);font-weight:500}
+.dayrow.on .d{color:var(--accent)}
+textarea{width:100%;min-height:150px;background:var(--panel2);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--r);padding:var(--s3);
+  font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical}
+.note{font-size:13px;color:var(--dim);margin:var(--s3) 0 0;line-height:1.5}
+.rowbtns{display:flex;gap:var(--s2);margin-top:var(--s3)}
+.rowbtns .btn{flex:1}
+.sheet .close{margin-top:var(--s3)}
+
+/* --------------------------------------------------------------- messages */
+.msg{border-radius:var(--r);padding:var(--s3) var(--s4);margin-bottom:var(--s4);font-size:14px;line-height:1.5;
+  display:flex;align-items:flex-start;gap:var(--s3);border:1px solid}
+.msg svg{width:18px;height:18px;flex:0 0 auto;margin-top:2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.msg b{display:block;font-weight:600;margin-bottom:2px}
+.msg button{text-decoration:underline;font-weight:600;color:inherit}
+.msg.warn{background:var(--red-tint);border-color:#E7B2BB;color:var(--red)}
+.msg.past{background:var(--amber-tint);border-color:#E3CD9B;color:var(--amber)}
+
+/* ----------------------------------------------------------------- toast */
+.toast{position:fixed;left:50%;bottom:calc(var(--s5) + env(safe-area-inset-bottom,0));transform:translateX(-50%);
+  z-index:var(--z-toast);display:flex;align-items:center;gap:var(--s3);
+  background:var(--ink);color:#fff;border-radius:999px;padding:var(--s2) var(--s2) var(--s2) var(--s4);
+  font-size:14px;font-weight:500;box-shadow:0 10px 30px -10px rgba(22,20,15,.5);
+  animation:rise .25s var(--ease);max-width:calc(100vw - 32px);white-space:nowrap}
+.toast .num{color:#F6C5CE}
+.toast button{min-height:36px;padding:0 var(--s3);border-radius:999px;background:rgba(255,255,255,.14);
+  font-weight:600;font-size:13px}
+.toast button:hover{background:rgba(255,255,255,.24)}
+
+/* ---------------------------------------------------------------- footer */
+footer{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  padding:var(--s3) 0 var(--s4);font-size:13px;color:var(--dim)}
+footer a{color:var(--dim);text-decoration:none;font-weight:500;border-bottom:1px solid var(--line2)}
+footer button{font-weight:600;color:var(--ink2);min-height:40px;display:inline-flex;align-items:center;gap:var(--s2)}
+footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ------------------------------------------------------------ how it works */
+.about{margin-bottom:var(--s4);padding:0}
+.about summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  gap:var(--s3);min-height:52px;padding:var(--s3) var(--s4);font-size:14px;font-weight:600;color:var(--ink2)}
+.about summary::-webkit-details-marker{display:none}
+.about summary svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;
+  stroke-linejoin:round;transition:transform .2s var(--ease);flex:0 0 auto}
+.about[open] summary svg{transform:rotate(180deg)}
+.about .body{padding:0 var(--s4) var(--s4);font-size:14px;line-height:1.55;color:var(--ink2);max-width:68ch}
+.about h3{margin:var(--s4) 0 var(--s1);font-size:13px;font-weight:600;color:var(--ink)}
+.about h3:first-child{margin-top:0}
+.about p{margin:0 0 var(--s2)}
+.about ul{margin:0 0 var(--s2);padding-left:18px}
+.about li{margin-bottom:2px}
+.about b{color:var(--ink);font-weight:600}
+.about a{color:var(--accent);font-weight:600}
+@media (min-width:900px){ .wrap > .about{grid-column:1 / -1} }
+
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.toast{animation-name:rise-toast}
+@keyframes rise-toast{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="brand" href="https://brusovcoach.org" aria-label="Brusov Coach home">
+      <span class="mark" aria-hidden="true">ER</span>
+      <h1>Effective <em>Reps</em><small>Reps × RIR → stimulus, per muscle</small></h1>
+    </a>
+    <button class="histbtn" id="histBtn" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M8 3v4M16 3v4"/><rect x="3" y="5" width="18" height="16" rx="2"/></svg>
+      History
+    </button>
+  </div>
+
+  <nav class="days" id="days" aria-label="Last seven days"></nav>
+
+  <div class="msgs">
+    <div id="storeWarn"></div>
+    <div id="pastBanner"></div>
+  </div>
+
+  <div class="col-left">
+    <section class="card" id="entry" aria-labelledby="entryH">
+      <h2 id="entryH">Log a set <span class="meta" id="entryMeta"></span></h2>
+
+      <div class="sec" style="margin-top:12px">
+        <div class="step"><span class="k">1</span>Muscle group</div>
+        <div class="chips" id="muscles" role="group" aria-label="Muscle group"></div>
+      </div>
+
+      <button class="rprow" id="rpBtn" role="switch" aria-checked="false">
+        <span class="t">Rest-pause set<small id="rpHint">Activation set, then short mini-sets</small></span>
+        <span class="sw" aria-hidden="true"></span>
+      </button>
+
+      <div class="sec">
+        <div class="step"><span class="k">2</span>Reps<span class="hint">completed this set</span></div>
+        <div class="repsbox" id="repsOne" aria-live="polite">
+          <span class="repslbl"><b>Reps</b><span id="repsHint">Type on the keypad</span></span>
+          <span class="repsval blank" id="repsVal">0</span>
+        </div>
+        <div class="rpboxes" id="repsTwo" hidden>
+          <button class="repsbox" id="boxAct" aria-live="polite">
+            <span class="repslbl"><b>Activation</b><span>first set</span></span>
+            <span class="repsval blank" id="actVal">0</span>
+          </button>
+          <button class="repsbox" id="boxMini" aria-live="polite">
+            <span class="repslbl"><b>Mini-sets</b><span>all reps</span></span>
+            <span class="repsval blank" id="miniVal">0</span>
+          </button>
+        </div>
+        <div class="pad" id="pad" role="group" aria-label="Reps keypad"></div>
+      </div>
+
+      <div class="sec">
+        <div class="step"><span class="k">3</span>RIR<span class="hint">reps left in the tank</span></div>
+        <div class="rirrow" id="rirs" role="group" aria-label="Reps in reserve"></div>
+        <div class="rirnote"><span>0 = to failure</span><span>5+ = not a working set</span></div>
+      </div>
+
+
+      <button class="log" id="logBtn" disabled>Log set</button>
+    </section>
+  </div>
+
+  <div class="col-right">
+    <section class="card" aria-labelledby="sessH">
+      <h2 id="sessH">This session <span class="meta">target 20–40 per muscle</span></h2>
+      <div class="tot">
+        <div>
+          <div class="big disp" id="sessTot">0</div>
+          <div class="lbl">effective reps</div>
+        </div>
+        <div class="side" id="sessSide"></div>
+      </div>
+      <div id="muscleTotals"></div>
+      <div id="clearBox"></div>
+    </section>
+
+    <section class="card" aria-labelledby="setsH">
+      <h2 id="setsH">Sets <span class="meta" id="setsMeta"></span></h2>
+      <div class="setlist" id="setList"></div>
+    </section>
+  </div>
+
+  <details class="card about" id="about">
+    <summary>How this works
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="body">
+      <h3>What an effective rep is</h3>
+      <p>Muscle grows from reps done while nearly all of its fibers are working. On a normal set that happens in roughly the <b>last 5 reps before failure</b>. So a set of 10 at RIR 0 scores 5, the same set at RIR 2 scores 3, and at RIR 4 it scores 1.</p>
+
+      <h3>How to log</h3>
+      <ul>
+        <li>Pick the muscle, enter the reps you did, then tap RIR: how many more you could have done.</li>
+        <li><b>RIR 5+</b> is logged but not counted. It's a warm-up, not a working set.</li>
+        <li>Be honest with RIR. Most people think they're closer to failure than they really are.</li>
+      </ul>
+
+      <h3>Rest-pause sets</h3>
+      <p>Turn on <b>Rest-pause</b> and enter two numbers: the activation set (taken close to failure) and the total reps of the mini-sets after it. The activation set scores as normal. <b>Every mini-set rep counts</b>, because after short rests the muscle is already fully working. RIR is for the activation set. The whole thing counts as one working set.</p>
+
+      <h3>The 20–40 target</h3>
+      <p>20–40 effective reps per muscle per session is a practical working range taken from programs that are known to work. It hasn't been measured directly. Start at the low end. Going past 40 mostly adds fatigue.</p>
+
+      <h3>Limits</h3>
+      <ul>
+        <li><b>Heavy sets are undercounted.</b> At about 80% of your max (a 5–8 rep weight), every rep counts, even well short of failure. The tool doesn't know the load, so a heavy triple at RIR 3 shows 2 when it's really closer to 3.</li>
+        <li><b>Weekly volume still matters.</b> Aim for about 10–16 hard sets per muscle per week alongside the session numbers.</li>
+        <li>Sets at RIR 3–4 still build muscle, just less per set.</li>
+      </ul>
+      <p>The full reasoning is in the <a href="https://hypertrophy.brusovcoach.org/">Hypertrophy Hub</a>.</p>
+    </div>
+  </details>
+
+  <footer>
+    <button id="backupBtn" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>
+      Backup / restore
+    </button>
+    <a href="https://brusovcoach.org">brusovcoach.org</a>
+  </footer>
+</div>
+
+<div id="modal"></div>
+<div id="toastBox"></div>
+
+<script>
+/* ===================================================================
+   THE RULE — ported verbatim from ~/Documents/IronLogWeb/lib/effective-reps.ts
+   Bands from ~/Documents/IronLogWeb/lib/targets.ts
+   Both trace back to "Hypertrophy Training — Principles That Work"
+   (2026 rev3) — Section 4 Volume, Section 5 Effective Reps, Section 8 Intensity.
+   Change nothing here without changing it there.
+   =================================================================== */
+
+/** Reps before failure that are treated as stimulating. */
+var EFFECTIVE_REP_THRESHOLD = 5;
+/** The highest RIR the logger offers. 5 means "5 or more left in the tank". */
+var MAX_RIR = 5;
+/** The furthest from failure a set can finish and still be counted at all. */
+var MAX_COUNTED_RIR = 4;
+
+/* Whether a set counts towards anything at all. In the source there are four
+   null cases — no RIR, warmup, not ticked, and RIR above 4. Here RIR is
+   mandatory and there is no warmup flag and no tick box, so only the last one
+   survives. That is a deliberate simplification, not lost logic. */
+function isCountedSet(s){ return s.rir <= MAX_COUNTED_RIR; }
+
+/* effective reps = min(reps, 5 - RIR), floored at 0.
+   null above 4 RIR — NOT zero. A set five or more reps from failure is moving
+   weight rather than training: it scores nothing, is not a working set, and
+   stays out of every sum and every count. Do not "fix" this to zero. */
+function effectiveReps(s){
+  if(!isCountedSet(s)) return null;
+  var stimulating = EFFECTIVE_REP_THRESHOLD - s.rir;
+  return Math.max(0, Math.min(s.reps, stimulating)) + (s.rp > 0 ? s.rp : 0);
+}
+/* REST-PAUSE — added here, NOT in IronLogWeb. A rest-pause set stores `rp`, the
+   total reps of the mini-sets after the activation set. `reps` and `rir` still
+   describe the activation set and score as above; every mini-set rep counts in
+   full, because a short rest after a near-failure set leaves the muscle fully
+   recruited. It is one working set. An activation set at RIR 5+ voids the whole
+   thing: the mini-sets never started from full recruitment. */
+
+/** Effective reps per muscle per session, "conservative end for most". */
+var SESSION_ER_LOW = 20, SESSION_ER_HIGH = 40;
+
+function sessionErBand(er){
+  if(er <= 0) return "none";
+  if(er < SESSION_ER_LOW / 2) return "below";   /* the /2 is load-bearing */
+  if(er < SESSION_ER_LOW) return "low";
+  if(er <= SESSION_ER_HIGH) return "in";
+  return "above";
+}
+var BAND_LABEL = {none:"nothing logged", below:"Below floor", low:"Under range",
+                  in:"In range", above:"Over range"};
+/* The bar is drawn on a 0–50 scale so the 20–40 zone sits at 40%–80% of the
+   track and an over-range muscle is still visibly over, not pinned to the end. */
+var TRACK_MAX = 50;
+
+/* Started as the eight groups from IronLogWeb/lib/types.ts:95. Shoulders and Legs
+   are now split — the three deltoid heads and quads/hams/glutes/calves are trained
+   and recovered separately, so each one carries its own 20–40 band. "Other" is last
+   on purpose: it is the catch-all fromCSV falls back to, and a lone chip on the
+   final row reads deliberate there in a way a lone "Calves" would not. */
+var MUSCLE_GROUPS = ["Chest","Back","Front Delt","Side Delt","Rear Delt","Biceps","Triceps",
+                     "Quads","Hams","Glutes","Calves","Core","Other"];
+/* Days logged before the split still hold these names. They are never offered as
+   chips again, but a backup must restore them as themselves -- there is no way to
+   know which subgroup an old "Legs" set was, and silently dropping it into Other
+   would rewrite history on every restore. */
+var LEGACY_GROUPS = ["Legs","Shoulders"];
+var SHORT = {Triceps:"Triceps", Biceps:"Biceps"};
+
+/* =================================================================== state */
+var KEY = "effreps.v1";
+var data = {};          /* { "2026-09-15": [ {m,reps,rir,t} ] } */
+var viewDate = todayKey();
+var selMuscle = null, repsStr = "", selRir = null;
+var rpOn = false, rpStr = "", padTarget = "reps";   /* rest-pause entry */
+
+function todayKey(){ return keyOf(new Date()); }
+function keyOf(d){ return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate()); }
+function pad2(n){ return n < 10 ? "0" + n : "" + n; }
+
+/* Whether this page can actually keep anything. A file:// page in iOS Safari is
+   the case that fails, and it fails silently -- a whole session logged, the tab
+   closed, an empty day next morning and no clue why. So it is probed at boot and
+   after every write, and a failure is said out loud on screen. */
+var storageOK = true;
+function probeStorage(){
+  try{
+    localStorage.setItem(KEY + ".probe", "1");
+    var back = localStorage.getItem(KEY + ".probe");
+    localStorage.removeItem(KEY + ".probe");
+    storageOK = back === "1";
+  }catch(e){ storageOK = false; }
+  return storageOK;
+}
+
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    data = raw ? (JSON.parse(raw) || {}) : {};
+    if(typeof data !== "object" || data === null || Array.isArray(data)) data = {};
+  }catch(e){ data = {}; }   /* a bad read renders an empty day, never breaks */
+}
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(data));
+    storageOK = localStorage.getItem(KEY) !== null;
+  }catch(e){ storageOK = false; }
+}
+function sets(dateKey){ return data[dateKey] || []; }
+
+/* ================================================================ rendering */
+var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function parseKey(k){ var p = k.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+function fmtDate(k){ var d = parseKey(k); return DAYS[d.getDay()] + " " + d.getDate() + " " + MONS[d.getMonth()]; }
+function fmtLong(k){ var d = parseKey(k); return DAYS[d.getDay()] + ", " + MONS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); }
+function dateLabel(k){ return k === todayKey() ? "Today" : fmtDate(k); }
+function plural(n, one){ return n + " " + one + (n === 1 ? "" : "s"); }
+
+function el(tag, cls, txt){
+  var n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(txt !== undefined) n.textContent = txt;
+  return n;
+}
+function svg(paths){
+  var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+  paths.forEach(function(d){
+    var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d); s.appendChild(p);
+  });
+  return s;
+}
+var ICON_X = ["M6 6l12 12M18 6L6 18"];
+var ICON_BACK = ["M9 7l-5 5 5 5M4 12h16"];
+/* keep taps from moving focus or firing a synthetic double */
+function tap(node, fn){
+  node.addEventListener("mousedown", function(e){ e.preventDefault(); });
+  node.addEventListener("click", fn);
+  return node;
+}
+function dayStats(k){
+  var er = 0, n = 0;
+  sets(k).forEach(function(s){ var v = effectiveReps(s); if(v !== null){ er += v; n += 1; } });
+  return {er:er, n:n, total:sets(k).length};
+}
+
+function renderDays(){
+  var box = document.getElementById("days");
+  box.innerHTML = "";
+  var today = new Date();
+  for(var i = 6; i >= 0; i--){
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    var k = keyOf(d);
+    var has = sets(k).length > 0;
+    var b = el("button", "day" + (k === viewDate ? " on" : "") + (has ? " has" : "") + (i === 0 ? " today" : ""));
+    b.setAttribute("aria-label", fmtLong(k) + (has ? ", " + dayStats(k).er + " effective reps" : ", nothing logged"));
+    if(k === viewDate) b.setAttribute("aria-current", "date");
+    b.appendChild(el("span", "wd", DAYS[d.getDay()]));
+    b.appendChild(el("span", "dn", d.getDate()));
+    b.appendChild(el("span", "dot"));
+    (function(k){ tap(b, function(){ viewDate = k; renderAll(); }); })(k);
+    box.appendChild(b);
+  }
+}
+
+function renderMuscles(){
+  var box = document.getElementById("muscles");
+  box.innerHTML = "";
+  var list = sets(viewDate);
+  MUSCLE_GROUPS.forEach(function(m){
+    var er = 0;
+    list.forEach(function(s){ if(s.m === m){ var v = effectiveReps(s); if(v !== null) er += v; } });
+    var b = el("button", "chip" + (selMuscle === m ? " on" : ""));
+    b.setAttribute("aria-pressed", selMuscle === m ? "true" : "false");
+    b.setAttribute("aria-label", m + (er > 0 ? ", " + er + " effective reps so far" : ""));
+    b.appendChild(document.createTextNode(SHORT[m] || m));
+    if(er > 0){ b.appendChild(el("span", "n", er)); }
+    tap(b, function(){ selMuscle = m; renderMuscles(); renderLog(); });
+    box.appendChild(b);
+  });
+}
+
+function renderPad(){
+  var pad = document.getElementById("pad");
+  if(pad.childNodes.length) return;            /* built once */
+  ["1","2","3","4","5","6","7","8","9","clr","0","del"].forEach(function(k){
+    var b = el("button", "key" + (k === "del" || k === "clr" ? " fn" : ""));
+    if(k === "del"){ b.appendChild(svg(["M21 6H8l-5 6 5 6h13a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z","M18 9l-6 6M12 9l6 6"])); b.setAttribute("aria-label","Delete last digit"); }
+    else if(k === "clr"){ b.textContent = "Clear"; b.setAttribute("aria-label","Clear reps"); }
+    else b.textContent = k;
+    tap(b, function(){
+      var s = rpOn && padTarget === "rp" ? rpStr : repsStr;
+      if(k === "del") s = s.slice(0, -1);
+      else if(k === "clr") s = "";
+      else if(s.length < 2) s = (s === "0" ? "" : s) + k;
+      if(rpOn && padTarget === "rp") rpStr = s; else repsStr = s;
+      renderReps(); renderLog();
+    });
+    pad.appendChild(b);
+  });
+}
+function renderReps(){
+  document.getElementById("repsOne").hidden = rpOn;
+  document.getElementById("repsTwo").hidden = !rpOn;
+  var rb = document.getElementById("rpBtn");
+  rb.setAttribute("aria-checked", rpOn ? "true" : "false");
+  if(rpOn){
+    [["actVal", repsStr, "boxAct", "reps"], ["miniVal", rpStr, "boxMini", "rp"]].forEach(function(f){
+      var v = document.getElementById(f[0]);
+      v.textContent = f[1] === "" ? "0" : f[1];
+      v.className = "repsval" + (f[1] === "" ? " blank" : "");
+      var box = document.getElementById(f[2]);
+      box.className = "repsbox" + (padTarget === f[3] ? " on" : "");
+      box.setAttribute("aria-pressed", padTarget === f[3] ? "true" : "false");
+    });
+  }
+  var v = document.getElementById("repsVal");
+  v.textContent = repsStr === "" ? "0" : repsStr;
+  v.className = "repsval" + (repsStr === "" ? " blank" : "");
+  document.getElementById("repsHint").textContent =
+    repsStr === "" ? "Type on the keypad" : plural(parseInt(repsStr,10), "rep") + " completed";
+}
+
+function renderRirs(){
+  var box = document.getElementById("rirs");
+  box.innerHTML = "";
+  for(var i = 0; i <= MAX_RIR; i++){
+    (function(i){
+      var dead = i > MAX_COUNTED_RIR;
+      var b = el("button", "rir" + (selRir === i ? " on" : "") + (dead ? " dead" : ""));
+      b.setAttribute("aria-pressed", selRir === i ? "true" : "false");
+      b.setAttribute("aria-label", (i === MAX_RIR ? "5 or more" : i) + " reps in reserve" + (dead ? ", not counted" : ""));
+      b.appendChild(el("span", "v", i === MAX_RIR ? i + "+" : "" + i));
+      b.appendChild(el("span", "s", i === 0 ? "fail" : i === MAX_RIR ? "easy" : "RIR"));
+      tap(b, function(){ selRir = i; renderRirs(); renderLog(); });
+      box.appendChild(b);
+    })(i);
+  }
+}
+
+function renderLog(){
+  var b = document.getElementById("logBtn");
+  var reps = parseInt(repsStr, 10), rp = parseInt(rpStr, 10);
+  var ok = selMuscle && reps > 0 && (!rpOn || rp > 0) && selRir !== null && viewDate === todayKey();
+  b.disabled = !ok;
+  b.className = "log" + (ok && selRir > MAX_COUNTED_RIR ? " dead" : "");
+  b.innerHTML = "";
+  if(viewDate !== todayKey()){
+    b.appendChild(document.createTextNode("Past day is read-only"));
+  }else if(ok && selRir > MAX_COUNTED_RIR){
+    b.appendChild(document.createTextNode("Log set — won't count"));
+    b.appendChild(el("span", "pill", "RIR " + MAX_RIR + "+"));
+  }else if(ok){
+    var v = effectiveReps({reps:reps, rir:selRir, rp:rpOn ? rp : 0});
+    b.textContent = "Log " + selMuscle + (rpOn ? " rest-pause" : " set");
+    b.appendChild(el("span", "pill", "+" + v + " ER"));
+  }else{
+    b.appendChild(document.createTextNode(
+      !selMuscle ? "Pick a muscle group" : !(reps > 0) ? (rpOn ? "Enter activation reps" : "Enter reps")
+        : rpOn && !(rp > 0) ? "Enter mini-set reps" : "Pick RIR"));
+  }
+  document.getElementById("entryMeta").textContent =
+    selMuscle ? selMuscle + (repsStr ? " · " + repsStr + (rpOn && rpStr ? " + " + rpStr : "") + " reps" : "") + (selRir !== null ? " · RIR " + (selRir === MAX_RIR ? "5+" : selRir) : "") : "";
+}
+
+function renderTotals(){
+  var list = sets(viewDate);
+  var box = document.getElementById("muscleTotals");
+  box.innerHTML = "";
+
+  var map = {}, order = [];
+  list.forEach(function(s){
+    if(!isCountedSet(s)) return;                 /* RIR 5 is not a working set */
+    if(!map[s.m]){ map[s.m] = {m:s.m, er:0, sets:0}; order.push(s.m); }
+    map[s.m].sets += 1;
+    map[s.m].er += effectiveReps(s);
+  });
+  var rows = order.map(function(m){ return map[m]; })
+    .sort(function(a,b){ return b.er - a.er || b.sets - a.sets; });
+
+  var total = 0, nsets = 0;
+  rows.forEach(function(r){ total += r.er; nsets += r.sets; });
+  document.getElementById("sessTot").textContent = total;
+  var side = document.getElementById("sessSide");
+  side.innerHTML = "";
+  if(rows.length){
+    var l1 = el("div"); l1.appendChild(el("b", "", plural(nsets, "working set"))); side.appendChild(l1);
+    var inRange = rows.filter(function(r){ return sessionErBand(r.er) === "in"; }).length;
+    side.appendChild(el("div", "", inRange + " of " + plural(rows.length, "muscle") + " in range"));
+  }else{
+    side.appendChild(el("div", "", dateLabel(viewDate)));
+  }
+
+  if(!rows.length){
+    var e = el("div", "empty");
+    e.appendChild(el("b", "", viewDate === todayKey() ? "No sets yet" : "Nothing logged"));
+    e.appendChild(document.createTextNode(viewDate === todayKey()
+      ? "Pick a muscle, enter reps and RIR, then log the set. Each muscle fills toward 20–40 effective reps."
+      : "No working sets were logged on " + fmtDate(viewDate) + "."));
+    box.appendChild(e); return;
+  }
+
+  rows.forEach(function(r){
+    var band = sessionErBand(r.er);
+    var row = el("div", "mrow b-" + band);
+    var name = el("div", "mname");
+    name.appendChild(document.createTextNode(r.m));
+    name.appendChild(el("span", "badge", BAND_LABEL[band]));
+    row.appendChild(name);
+    var mer = el("div", "mer");
+    mer.appendChild(el("span", "v", r.er));
+    mer.appendChild(el("span", "u", "ER"));
+    mer.appendChild(el("span", "sets", plural(r.sets, "set")));
+    row.appendChild(mer);
+    var track = el("div", "track");
+    track.setAttribute("role", "img");
+    track.setAttribute("aria-label", r.er + " of " + SESSION_ER_LOW + " to " + SESSION_ER_HIGH + " target, " + BAND_LABEL[band]);
+    track.appendChild(el("span", "zone"));
+    var fill = el("span", "fill");
+    fill.style.transform = "scaleX(" + Math.min(1, r.er / TRACK_MAX) + ")";
+    track.appendChild(fill); row.appendChild(track);
+    var foot = el("div", "mfoot");
+    foot.setAttribute("aria-hidden", "true");
+    foot.appendChild(el("span", "t0", "0"));
+    foot.appendChild(el("span", "t20", "20"));
+    foot.appendChild(el("span", "t40", "40"));
+    row.appendChild(foot);
+    box.appendChild(row);
+  });
+}
+
+/* The clear control lives under the session totals: it is about the session, and
+   it is only offered on today — a past day is read only everywhere else too.
+   Two taps, and the second one says how many sets it is about to throw away. */
+var confirmClear = false;
+function renderClear(){
+  var box = document.getElementById("clearBox");
+  box.innerHTML = "";
+  var list = sets(viewDate);
+  if(viewDate !== todayKey() || !list.length){ confirmClear = false; return; }
+
+  if(!confirmClear){
+    var b = el("button", "clearbtn");
+    b.appendChild(svg(["M3 6h18","M8 6V4h8v2","M6 6l1 14h10l1-14"]));
+    b.appendChild(document.createTextNode("Clear today"));
+    b.querySelector("svg").setAttribute("style", "width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round");
+    tap(b, function(){ confirmClear = true; renderClear(); });
+    box.appendChild(b);
+    return;
+  }
+  var row = el("div", "confirm");
+  row.appendChild(el("span", "q", "Delete all " + plural(list.length, "set") + " from today?"));
+  var no = el("button", "btn", "Keep");
+  tap(no, function(){ confirmClear = false; renderClear(); });
+  var yes = el("button", "btn danger", "Delete");
+  tap(yes, function(){
+    var gone = data[todayKey()];
+    delete data[todayKey()];
+    confirmClear = false;
+    repsStr = ""; selRir = null;
+    save(); renderAll();
+    showToast("Cleared " + plural(gone.length, "set"), function(){
+      data[todayKey()] = gone; save(); renderAll();
+    });
+  });
+  row.appendChild(no); row.appendChild(yes);
+  box.appendChild(row);
+}
+
+function renderSets(){
+  var list = sets(viewDate);
+  var box = document.getElementById("setList");
+  box.innerHTML = "";
+  document.getElementById("setsMeta").textContent = list.length ? plural(list.length, "set") + " · newest first" : "";
+  if(!list.length){
+    var e = el("div", "empty");
+    e.appendChild(el("b", "", "No sets on this day"));
+    e.appendChild(document.createTextNode(viewDate === todayKey()
+      ? "Logged sets appear here. Remove a mis-tap with the × on its row."
+      : "Past days are read-only."));
+    box.appendChild(e); return;
+  }
+  var editable = viewDate === todayKey();
+  /* newest first — the set just logged, and the one most likely to be a mis-tap,
+     sits at the top instead of at the bottom of a long session */
+  list.map(function(s, i){ return {s:s, i:i}; }).reverse().forEach(function(p){
+    var s = p.s, i = p.i;
+    var v = effectiveReps(s);
+    var row = el("div", "setrow" + (v === null ? " dead" : ""));
+    row.appendChild(el("span", "idx", i + 1));
+    var what = el("div", "what");
+    what.appendChild(el("span", "m", s.m));
+    what.appendChild(el("span", "d", s.reps + (s.rp > 0 ? " + " + s.rp : "") + " reps · RIR " + (s.rir === MAX_RIR ? s.rir + "+" : s.rir) + (s.rp > 0 ? " · rest-pause" : "")));
+    row.appendChild(what);
+    var er = el("span", "er");
+    if(v === null){ er.textContent = "not counted"; }
+    else { er.appendChild(document.createTextNode("+" + v)); er.appendChild(el("small", "", "ER")); }
+    row.appendChild(er);
+    var del = el("button", "del");
+    del.setAttribute("aria-label", "Remove set " + (i + 1) + ", " + s.m + " " + s.reps + " reps");
+    del.appendChild(svg(ICON_X));
+    del.disabled = !editable;
+    if(editable){
+      tap(del, function(){
+        var removed = list.splice(i, 1)[0];
+        if(!list.length) delete data[viewDate];
+        save(); renderAll();
+        showToast("Removed " + removed.m + " · " + removed.reps + " reps", function(){
+          if(!data[todayKey()]) data[todayKey()] = [];
+          data[todayKey()].splice(Math.min(i, data[todayKey()].length), 0, removed);
+          save(); renderAll();
+        });
+      });
+    }
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+function renderWarning(){
+  var box = document.getElementById("storeWarn");
+  box.innerHTML = "";
+  if(storageOK) return;
+  var c = el("div", "msg warn");
+  c.setAttribute("role", "alert");
+  c.appendChild(svg(["M12 9v4M12 17h.01","M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"]));
+  var t = el("div");
+  t.appendChild(el("b", "", "This browser is not saving your sets."));
+  t.appendChild(document.createTextNode("Nothing will be here when you reopen the page. Copy your numbers out through "));
+  var b = el("button", "", "Backup / restore");
+  tap(b, function(){ document.getElementById("backupBtn").click(); });
+  t.appendChild(b);
+  t.appendChild(document.createTextNode(" before you close it."));
+  c.appendChild(t);
+  box.appendChild(c);
+}
+
+function renderBanner(){
+  var box = document.getElementById("pastBanner");
+  box.innerHTML = "";
+  var entry = document.getElementById("entry");
+  if(viewDate === todayKey()){ entry.style.display = ""; return; }
+  entry.style.display = "none";
+  var c = el("div", "msg past");
+  c.appendChild(svg(["M12 8v4l3 3","M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"]));
+  var t = el("div");
+  t.appendChild(el("b", "", "Viewing " + fmtLong(viewDate)));
+  t.appendChild(document.createTextNode("Past days are read-only. "));
+  var b = el("button", "", "Back to today");
+  tap(b, function(){ viewDate = todayKey(); renderAll(); });
+  t.appendChild(b);
+  c.appendChild(t);
+  box.appendChild(c);
+}
+
+function renderAll(){
+  renderWarning(); renderBanner(); renderDays(); renderMuscles(); renderPad(); renderReps();
+  renderRirs(); renderLog(); renderTotals(); renderClear(); renderSets();
+}
+
+/* ------------------------------------------------------------------ toast
+   One at a time. Every destructive or additive action gets a short confirmation
+   with an Undo, so a mis-tap costs one more tap rather than a set. */
+var toastTimer = null;
+function showToast(text, undo){
+  var box = document.getElementById("toastBox");
+  box.innerHTML = "";
+  clearTimeout(toastTimer);
+  var t = el("div", "toast");
+  t.setAttribute("role", "status");
+  t.appendChild(el("span", "", text));
+  if(undo){
+    var b = el("button", "", "Undo");
+    tap(b, function(){ hideToast(); undo(); });
+    t.appendChild(b);
+  }
+  box.appendChild(t);
+  toastTimer = setTimeout(hideToast, undo ? 6000 : 2500);
+}
+function hideToast(){ clearTimeout(toastTimer); document.getElementById("toastBox").innerHTML = ""; }
+
+/* ================================================================== actions */
+tap(document.getElementById("logBtn"), function(){
+  if(document.getElementById("logBtn").disabled) return;
+  var reps = parseInt(repsStr, 10), rp = parseInt(rpStr, 10);
+  if(!(reps > 0) || !selMuscle || selRir === null || (rpOn && !(rp > 0))) return;
+  var k = todayKey();                       /* always writes to the real today */
+  if(!data[k]) data[k] = [];
+  var set = {m:selMuscle, reps:reps, rir:selRir, t:Date.now()};
+  if(rpOn) set.rp = rp;
+  data[k].push(set);
+  viewDate = k;
+  repsStr = ""; rpStr = ""; selRir = null;  /* muscle and rest-pause mode are sticky on purpose */
+  padTarget = "reps";
+  confirmClear = false;                     /* a new set cancels a half-tapped clear */
+  save(); renderAll();
+  var v = effectiveReps(set);
+  showToast(set.m + " · " + set.reps + (set.rp ? " + " + set.rp : "") + " reps · " + (v === null ? "not counted" : "+" + v + " ER"), function(){
+    var list = data[k] || [];
+    var idx = list.indexOf(set);
+    if(idx > -1){ list.splice(idx, 1); if(!list.length) delete data[k]; save(); renderAll(); }
+  });
+});
+
+tap(document.getElementById("rpBtn"), function(){
+  rpOn = !rpOn; padTarget = "reps"; if(!rpOn) rpStr = "";
+  renderReps(); renderLog();
+});
+tap(document.getElementById("boxAct"), function(){ padTarget = "reps"; renderReps(); });
+tap(document.getElementById("boxMini"), function(){ padTarget = "rp"; renderReps(); });
+
+/* ---------------------------------------------------- backup as plain text
+   The backup used to be raw JSON, which is unreadable on a phone. It is a CSV
+   now — date, muscle, effective reps — so a glance at it says what it holds.
+   `reps` and `rir` ride along because they are the only things actually stored;
+   `effective` is derived and is there to be read, not to be trusted on the way
+   back in. Restore recomputes it from reps and rir like everything else does. */
+var CSV_HEAD = "date,muscle,reps,rir,effective,restpause";
+
+function toCSV(d){
+  var lines = [CSV_HEAD];
+  Object.keys(d).sort().forEach(function(k){
+    (d[k] || []).forEach(function(s){
+      var v = effectiveReps(s);
+      lines.push([k, s.m, s.reps, s.rir, v === null ? "" : v, s.rp > 0 ? s.rp : ""].join(","));
+    });
+  });
+  return lines.join("\n");
+}
+
+/* Tolerant on purpose: a backup gets pasted back from Notes or an email, where
+   it may have picked up blank lines or a stray header. Anything that is not a
+   usable row is skipped rather than failing the whole restore. Returns null
+   only when no row at all could be read. */
+function fromCSV(text){
+  var out = {}, rows = 0;
+  String(text).split(/\r?\n/).forEach(function(line){
+    line = line.trim();
+    if(!line || line.toLowerCase().indexOf("date,") === 0) return;
+    var c = line.split(",");
+    if(c.length < 4) return;
+    var date = c[0].trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    var name = c[1].trim();
+    var reps = parseInt(c[2], 10), rir = parseInt(c[3], 10);
+    if(!(reps > 0) || !(rir >= 0) || rir > MAX_RIR) return;
+    /* match the muscle by name, case-insensitively, against the current chips
+       plus the pre-split names; anything unrecognised lands in Other rather
+       than inventing a group that has no chip */
+    var m = "Other";
+    var known = MUSCLE_GROUPS.concat(LEGACY_GROUPS);
+    for(var i = 0; i < known.length; i++){
+      if(known[i].toLowerCase() === name.toLowerCase()){ m = known[i]; break; }
+    }
+    if(!out[date]) out[date] = [];
+    var set = {m:m, reps:reps, rir:rir, t:++rows};
+    var rp = parseInt(c[5], 10);             /* sixth column: rest-pause mini-set reps */
+    if(rp > 0) set.rp = rp;
+    out[date].push(set);
+  });
+  return rows ? out : null;
+}
+
+/* ------------------------------------------------------------------ sheets */
+var lastFocus = null;
+function closeModal(){
+  document.getElementById("modal").innerHTML = "";
+  document.removeEventListener("keydown", onEsc);
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function onEsc(e){ if(e.key === "Escape") closeModal(); }
+function openSheet(title, build){
+  lastFocus = document.activeElement;
+  var m = document.getElementById("modal");
+  m.innerHTML = "";
+  var scrim = el("div", "scrim");
+  scrim.addEventListener("click", function(e){ if(e.target === scrim) closeModal(); });
+  var sheet = el("div", "sheet");
+  sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+  sheet.setAttribute("aria-label", title);
+  sheet.appendChild(el("div", "grab"));
+  sheet.appendChild(el("h2", "", title));
+  build(sheet);
+  var close = el("button", "btn block close", "Close");
+  tap(close, closeModal);
+  sheet.appendChild(close);
+  scrim.appendChild(sheet);
+  m.appendChild(scrim);
+  document.addEventListener("keydown", onEsc);
+  close.focus();
+}
+
+tap(document.getElementById("histBtn"), function(){
+  openSheet("History", function(sheet){
+    var keys = Object.keys(data).sort().reverse();
+    if(keys.indexOf(todayKey()) === -1) keys.unshift(todayKey());
+    keys.forEach(function(k){
+      var st = dayStats(k);
+      var row = el("button", "dayrow" + (k === viewDate ? " on" : ""));
+      var left = el("div");
+      left.appendChild(el("div", "d", dateLabel(k)));
+      left.appendChild(el("div", "s", k === todayKey() ? fmtLong(k) : parseKey(k).getFullYear()));
+      row.appendChild(left);
+      var r = el("div", "r");
+      r.appendChild(el("b", "", st.er + " ER"));
+      r.appendChild(document.createTextNode(" · " + plural(st.n, "set")));
+      row.appendChild(r);
+      tap(row, function(){ viewDate = k; closeModal(); renderAll(); });
+      sheet.appendChild(row);
+    });
+  });
+});
+
+/* -------------------------------------------------------- backup / restore */
+tap(document.getElementById("backupBtn"), function(){
+  openSheet("Backup / restore", function(sheet){
+    var ta = el("textarea");
+    ta.setAttribute("aria-label", "Backup text");
+    ta.value = toCSV(data);
+    sheet.appendChild(ta);
+    sheet.appendChild(el("p", "note",
+      "One line per set: date, muscle, reps, RIR, effective reps, and mini-set reps for a rest-pause set. Copy it " +
+      "somewhere safe (Notes, or an email to yourself) and paste it back here " +
+      "to bring the days back if the phone ever clears them. Restore replaces a " +
+      "whole day at a time: if a date is in the text, the sets here for that " +
+      "date are overwritten."));
+    var btns = el("div", "rowbtns");
+    var copy = el("button", "btn", "Copy");
+    tap(copy, function(){
+      ta.select(); ta.setSelectionRange(0, 999999);
+      var done = false;
+      try{ done = document.execCommand("copy"); }catch(e){}
+      if(!done && navigator.clipboard){
+        navigator.clipboard.writeText(ta.value).then(function(){
+          copy.textContent = "Copied";
+        }, function(){ copy.textContent = "Select & copy"; });
+      }else{
+        copy.textContent = done ? "Copied" : "Select & copy";
+      }
+    });
+    var restore = el("button", "btn primary", "Restore");
+    tap(restore, function(){
+      var inc = null, txt = (ta.value || "").trim();
+      /* JSON is still accepted: backups copied out before this was a CSV are
+         still sitting in somebody's notes, and they should still go back in. */
+      if(txt.charAt(0) === "{"){
+        try{
+          var j = JSON.parse(txt);
+          if(j && typeof j === "object" && !Array.isArray(j)) inc = j;
+        }catch(e){}
+      }else{
+        inc = fromCSV(txt);
+      }
+      if(!inc){ restore.textContent = "Nothing readable"; return; }
+      var days = 0;
+      Object.keys(inc).forEach(function(k){
+        if(Array.isArray(inc[k]) && inc[k].length){ data[k] = inc[k]; days++; }
+      });
+      if(!days){ restore.textContent = "Nothing readable"; return; }
+      save(); renderAll();
+      restore.textContent = "Restored " + plural(days, "day");
+    });
+    btns.appendChild(copy); btns.appendChild(restore);
+    sheet.appendChild(btns);
+  });
+});
+
+/* ===================================================================== boot */
+probeStorage();
+load();
+renderAll();
+
+/* A phone left open overnight should not still be sitting on yesterday. If the
+   date has rolled over while the page was in the background and we were looking
+   at what was then "today", follow it forward. An explicitly chosen past day is
+   left where it is. */
+var lastToday = todayKey();
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState !== "visible") return;
+  load();
+  var now = todayKey();
+  if(now !== lastToday && viewDate === lastToday) viewDate = now;
+  lastToday = now;
+  renderAll();
+});
+</script>
+</body>
+</html>
