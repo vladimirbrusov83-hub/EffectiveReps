@@ -1,0 +1,24 @@
+{
+  "name": "effectivereps",
+  "version": "1.0.0",
+  "description": "Effective Reps Estimator - Log reps and RIR, see effective reps per muscle group for the session",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "serve": "python3 -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladimirbrusov83-hub/EffectiveReps.git"
+  },
+  "keywords": [
+    "fitness",
+    "training",
+    "strength",
+    "reps",
+    "RIR"
+  ],
+  "author": "Vladimir Brusov",
+  "license": "UNLICENSED",
+  "dependencies": {}
+}
