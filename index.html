@@ -34,6 +34,7 @@
   --green:#1B6E3A; --green-tint:#E3F1E7;
   --amber:#8A5A00; --amber-tint:#F8EBCF;
   --red:#A4132D;  --red-tint:#FBE4E7;
+  --orange:#C2570C; --orange-tint:#FCE7D6;
   --focus:#1F5FBF;
   --r-sm:8px; --r:12px; --r-lg:16px;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px;
@@ -208,24 +209,24 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 .mname{grid-area:name;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:var(--s2)}
 .badge{font-size:11px;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:999px;
   background:var(--panel3);color:var(--ink2)}
-.b-below .badge{background:var(--red-tint);color:var(--red)}
-.b-low .badge{background:var(--amber-tint);color:var(--amber)}
-.b-in .badge{background:var(--green-tint);color:var(--green)}
-.b-above .badge{background:var(--amber-tint);color:var(--amber)}
+.b-under .badge{background:var(--red-tint);color:var(--red)}
+.b-maint .badge{background:var(--orange-tint);color:var(--orange)}
+.b-hyper .badge{background:var(--green-tint);color:var(--green)}
+.b-over .badge{background:var(--red-tint);color:var(--red)}
 .mer{grid-area:er;display:flex;align-items:baseline;gap:var(--s1);justify-self:end}
 .mer .v{font-family:var(--disp);font-size:30px;line-height:.9;color:var(--ink)}
 .mer .u{font-size:12px;color:var(--faint);font-weight:500}
 .mer .sets{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:var(--s2)}
-/* track: 0–50 scale; the 20–40 target zone is drawn on the track itself */
+/* track: 0–60 scale; the 16–49 hypertrophy zone is drawn on the track itself */
 .track{grid-area:bar;position:relative;height:10px;border-radius:5px;background:var(--panel3);overflow:hidden}
-.track .zone{position:absolute;top:0;bottom:0;left:40%;width:40%;background:rgba(27,110,58,.16)}
+.track .zone{position:absolute;top:0;bottom:0;left:26.667%;width:56.667%;background:rgba(27,110,58,.16)}
 .track .fill{position:absolute;top:0;bottom:0;left:0;width:100%;border-radius:5px;background:var(--faint);
   transform-origin:left center;transition:transform .3s var(--ease)}
-.b-below .fill{background:var(--red)} .b-low .fill{background:var(--amber)}
-.b-in .fill{background:var(--green)} .b-above .fill{background:var(--amber)}
+.b-under .fill{background:var(--red)} .b-maint .fill{background:var(--orange)}
+.b-hyper .fill{background:var(--green)} .b-over .fill{background:var(--red)}
 .mfoot{grid-area:foot;position:relative;height:14px;font-family:var(--mono);font-size:11px;color:var(--faint)}
 .mfoot span{position:absolute;top:0;transform:translateX(-50%)}
-.mfoot .t20{left:40%}.mfoot .t40{left:80%}.mfoot .t0{left:0;transform:none}.mfoot .t50{right:0;transform:none}
+.mfoot .t9{left:15%}.mfoot .t16{left:26.667%}.mfoot .t50{left:83.333%}.mfoot .t0{left:0;transform:none}
 
 .empty{padding:var(--s6) var(--s3);text-align:center;color:var(--dim);font-size:14px;line-height:1.5}
 .empty b{display:block;color:var(--ink);font-weight:600;margin-bottom:var(--s1);font-size:15px}
@@ -416,7 +417,7 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
 
   <div class="col-right">
     <section class="card" aria-labelledby="sessH">
-      <h2 id="sessH">This session <span class="meta">target 20–40 per muscle</span></h2>
+      <h2 id="sessH">This session <span class="meta">hypertrophy 16–49 per muscle</span></h2>
       <div class="tot">
         <div>
           <div class="big disp" id="sessTot">0</div>
@@ -452,8 +453,8 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <h3>Rest-pause sets</h3>
       <p>Turn on <b>Rest-pause</b> and enter two numbers: the activation set (taken close to failure) and the total reps of the mini-sets after it. The activation set scores as normal. <b>Every mini-set rep counts</b>, because after short rests the muscle is already fully working. RIR is for the activation set. The whole thing counts as one working set.</p>
 
-      <h3>The 20–40 target</h3>
-      <p>20–40 effective reps per muscle per session is a practical working range taken from programs that are known to work. It hasn't been measured directly. Start at the low end. Going past 40 mostly adds fatigue.</p>
+      <h3>The ranges</h3>
+      <p>Each muscle's bar is colored by its effective reps for the session: <b>0–8 under range</b> (red), <b>9–15 maintenance</b> (orange), <b>16–49 hypertrophy</b> (green), <b>50+ too much volume</b> (red). These are practical working ranges, not measured limits. Past 50, extra sets mostly add fatigue.</p>
 
       <h3>Limits</h3>
       <ul>
@@ -514,20 +515,21 @@ function effectiveReps(s){
    thing: the mini-sets never started from full recruitment. */
 
 /** Effective reps per muscle per session, "conservative end for most". */
-var SESSION_ER_LOW = 20, SESSION_ER_HIGH = 40;
+/* Oct 2026: Vladimir's own four zones replace IronLogWeb's 20–40 band here.
+   0–8 under, 9–15 maintenance, 16–49 hypertrophy, 50+ too much. */
+var ER_MAINT = 9, ER_HYPER = 16, ER_OVER = 50;
 
 function sessionErBand(er){
   if(er <= 0) return "none";
-  if(er < SESSION_ER_LOW / 2) return "below";   /* the /2 is load-bearing */
-  if(er < SESSION_ER_LOW) return "low";
-  if(er <= SESSION_ER_HIGH) return "in";
-  return "above";
+  if(er < ER_MAINT) return "under";
+  if(er < ER_HYPER) return "maint";
+  if(er < ER_OVER) return "hyper";
+  return "over";
 }
-var BAND_LABEL = {none:"nothing logged", below:"Below floor", low:"Under range",
-                  in:"In range", above:"Over range"};
-/* The bar is drawn on a 0–50 scale so the 20–40 zone sits at 40%–80% of the
-   track and an over-range muscle is still visibly over, not pinned to the end. */
-var TRACK_MAX = 50;
+var BAND_LABEL = {none:"nothing logged", under:"Under range", maint:"Maintenance",
+                  hyper:"Hypertrophy", over:"Too much volume"};
+/* The bar is drawn on a 0–60 scale so 50+ is still visibly over, not pinned to the end. */
+var TRACK_MAX = 60;
 
 /* Started as the eight groups from IronLogWeb/lib/types.ts:95. Shoulders and Legs
    are now split — the three deltoid heads and quads/hams/glutes/calves are trained
@@ -763,8 +765,8 @@ function renderTotals(){
   side.innerHTML = "";
   if(rows.length){
     var l1 = el("div"); l1.appendChild(el("b", "", plural(nsets, "working set"))); side.appendChild(l1);
-    var inRange = rows.filter(function(r){ return sessionErBand(r.er) === "in"; }).length;
-    side.appendChild(el("div", "", inRange + " of " + plural(rows.length, "muscle") + " in range"));
+    var inRange = rows.filter(function(r){ return sessionErBand(r.er) === "hyper"; }).length;
+    side.appendChild(el("div", "", inRange + " of " + plural(rows.length, "muscle") + " in hypertrophy"));
   }else{
     side.appendChild(el("div", "", dateLabel(viewDate)));
   }
@@ -773,7 +775,7 @@ function renderTotals(){
     var e = el("div", "empty");
     e.appendChild(el("b", "", viewDate === todayKey() ? "No sets yet" : "Nothing logged"));
     e.appendChild(document.createTextNode(viewDate === todayKey()
-      ? "Pick a muscle, enter reps and RIR, then log the set. Each muscle fills toward 20–40 effective reps."
+      ? "Pick a muscle, enter reps and RIR, then log the set. Each muscle fills toward 16–49 effective reps."
       : "No working sets were logged on " + fmtDate(viewDate) + "."));
     box.appendChild(e); return;
   }
@@ -792,7 +794,7 @@ function renderTotals(){
     row.appendChild(mer);
     var track = el("div", "track");
     track.setAttribute("role", "img");
-    track.setAttribute("aria-label", r.er + " of " + SESSION_ER_LOW + " to " + SESSION_ER_HIGH + " target, " + BAND_LABEL[band]);
+    track.setAttribute("aria-label", r.er + " effective reps, " + BAND_LABEL[band]);
     track.appendChild(el("span", "zone"));
     var fill = el("span", "fill");
     fill.style.transform = "scaleX(" + Math.min(1, r.er / TRACK_MAX) + ")";
@@ -800,8 +802,9 @@ function renderTotals(){
     var foot = el("div", "mfoot");
     foot.setAttribute("aria-hidden", "true");
     foot.appendChild(el("span", "t0", "0"));
-    foot.appendChild(el("span", "t20", "20"));
-    foot.appendChild(el("span", "t40", "40"));
+    foot.appendChild(el("span", "t9", "9"));
+    foot.appendChild(el("span", "t16", "16"));
+    foot.appendChild(el("span", "t50", "50"));
     row.appendChild(foot);
     box.appendChild(row);
   });
