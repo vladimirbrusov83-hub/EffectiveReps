@@ -362,6 +362,9 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:var(--s
   padding:var(--s3) 0 var(--s4);font-size:13px;color:var(--dim)}
 footer a{color:var(--dim);text-decoration:none;font-weight:500;border-bottom:1px solid var(--line2)}
 footer button{font-weight:600;color:var(--ink2);min-height:40px;display:inline-flex;align-items:center;gap:var(--s2)}
+footer{flex-wrap:wrap}
+footer .credit{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1) var(--s3);font-size:12px;color:var(--faint)}
+footer .credit a{display:inline-flex;align-items:center;min-height:32px;border-bottom:0;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line2)}
 footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ------------------------------------------------------------ how it works */
@@ -528,6 +531,11 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>
       Backup / restore
     </button>
+    <div class="credit">
+      <span>&copy; 2026 Vladimir Brusov</span>
+      <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener license">License</a>
+      <a href="mailto:vladimirbrusov83@gmail.com">vladimirbrusov83@gmail.com</a>
+    </div>
   </footer>
 </div>
 
