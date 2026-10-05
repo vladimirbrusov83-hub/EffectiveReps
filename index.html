@@ -150,6 +150,15 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 .addrow input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
 
 /* weekly volume */
+.week summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--s2);
+  min-height:44px;margin:-10px 0;-webkit-tap-highlight-color:transparent}
+.week summary::-webkit-details-marker{display:none}
+.week summary h2{flex:1}
+.week summary svg{width:18px;height:18px;stroke:var(--ink2);fill:none;stroke-width:2;stroke-linecap:round;
+  stroke-linejoin:round;transition:transform .2s var(--ease);flex:0 0 auto}
+.week[open] summary svg{transform:rotate(180deg)}
+.week[open] summary{margin-bottom:0}
+.week summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
 .wkey{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin:var(--s2) 0 var(--s1)}
 .wsum{font-size:12px;color:var(--dim);padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
 .wrow{display:grid;grid-template-columns:8.5em 1fr 7.5ch;align-items:center;gap:var(--s3);
@@ -465,11 +474,14 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <div id="clearBox"></div>
     </section>
 
-    <section class="card" aria-labelledby="weekH">
-      <h2 id="weekH">This week <span class="meta" id="weekMeta"></span></h2>
+    <details class="card week" id="weekCard" open>
+      <summary>
+        <h2 id="weekH">This week <span class="meta" id="weekMeta"></span></h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
       <div class="wkey" aria-hidden="true"><span>hard sets per muscle</span><span>target 10–16</span></div>
       <div id="weekRows"></div>
-    </section>
+    </details>
 
     <section class="card" aria-labelledby="setsH">
       <h2 id="setsH">Sets <span class="meta" id="setsMeta"></span></h2>
@@ -1414,6 +1426,14 @@ tap(document.getElementById("backupBtn"), function(){
 
 /* ===================================================================== boot */
 probeStorage();
+/* Remember whether "This week" is collapsed (per phone, convenience only). */
+(function(){
+  var d = document.getElementById("weekCard"), K = "effreps.weekOpen";
+  try{ if(localStorage.getItem(K) === "0") d.open = false; }catch(e){}
+  d.addEventListener("toggle", function(){
+    try{ localStorage.setItem(K, d.open ? "1" : "0"); }catch(e){}
+  });
+})();
 load();
 loadCustom();
 renderAll();
