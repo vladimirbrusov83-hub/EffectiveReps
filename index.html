@@ -131,6 +131,38 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
   background:var(--ink);color:#fff;font-family:var(--mono);font-size:11px;font-weight:500;
   display:flex;align-items:center;justify-content:center;border:2px solid var(--panel)}
 .chip.on .n{background:var(--ink)}
+.chip.add{background:transparent;border-style:dashed;color:var(--dim)}
+
+/* secondary muscles: smaller pills under the main chips */
+.secwrap{margin-top:var(--s3);padding:var(--s3);border:1px solid var(--line);border-radius:var(--r);background:var(--panel2)}
+.sechead{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;font-size:13px;margin-bottom:var(--s2)}
+.sechead b{font-weight:600;color:var(--ink2)}
+.sechead span{color:var(--faint);font-size:12px}
+.minis{display:flex;flex-wrap:wrap;gap:6px}
+.mini{min-height:36px;padding:0 var(--s3);border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  font-size:13px;font-weight:600;color:var(--ink2);transition:background .15s var(--ease),border-color .15s var(--ease)}
+.mini.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* add-muscle sheet */
+.addrow{display:flex;gap:var(--s2)}
+.addrow input{flex:1;min-width:0;min-height:44px;padding:0 var(--s3);border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--panel2);color:var(--ink);font:inherit;font-size:16px}
+.addrow input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+
+/* weekly volume */
+.wkey{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin:var(--s2) 0 var(--s1)}
+.wsum{font-size:12px;color:var(--dim);padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
+.wrow{display:grid;grid-template-columns:8.5em 1fr 7.5ch;align-items:center;gap:var(--s3);
+  min-height:40px;padding:6px 0;border-bottom:1px solid var(--line)}
+.wrow:last-child{border-bottom:0}
+.wn{font-size:14px;font-weight:600;color:var(--ink);line-height:1.2;overflow-wrap:anywhere}
+.wtrack{position:relative;height:8px;border-radius:4px;background:var(--panel3);overflow:hidden}
+/* 0–24 scale; 10–16 target zone */
+.wtrack .zone{position:absolute;top:0;bottom:0;left:41.667%;width:25%;background:rgba(27,110,58,.16)}
+.wtrack .fill{position:absolute;inset:0;border-radius:4px;background:var(--faint);transform-origin:left center;transition:transform .3s var(--ease)}
+.wrow.b-under .fill{background:var(--red)} .wrow.b-hyper .fill{background:var(--green)} .wrow.b-maint .fill{background:var(--orange)}
+.wv{font-family:var(--mono);font-size:12px;color:var(--faint);text-align:right;white-space:nowrap}
+.wv b{font-size:14px;color:var(--ink);font-weight:500}
 
 /* ---------------------------------------------------------------- keypad */
 .repsbox{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
@@ -378,6 +410,10 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <div class="sec" style="margin-top:12px">
         <div class="step"><span class="k">1</span>Muscle group</div>
         <div class="chips" id="muscles" role="group" aria-label="Muscle group"></div>
+        <div class="secwrap" id="secWrap" hidden>
+          <div class="sechead"><b>Also works ½</b><span id="secHint"></span></div>
+          <div class="minis" id="secChips" role="group" aria-label="Secondary muscles at half credit"></div>
+        </div>
       </div>
 
       <button class="rprow" id="rpBtn" role="switch" aria-checked="false">
@@ -429,6 +465,12 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <div id="clearBox"></div>
     </section>
 
+    <section class="card" aria-labelledby="weekH">
+      <h2 id="weekH">This week <span class="meta" id="weekMeta"></span></h2>
+      <div class="wkey" aria-hidden="true"><span>hard sets per muscle</span><span>target 10–16</span></div>
+      <div id="weekRows"></div>
+    </section>
+
     <section class="card" aria-labelledby="setsH">
       <h2 id="setsH">Sets <span class="meta" id="setsMeta"></span></h2>
       <div class="setlist" id="setList"></div>
@@ -448,7 +490,11 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
         <li>Pick the muscle, enter the reps you did, then tap RIR: how many more you could have done.</li>
         <li><b>RIR 5+</b> is logged but not counted. It's a warm-up, not a working set.</li>
         <li>Be honest with RIR. Most people think they're closer to failure than they really are.</li>
+        <li>Muscle not listed? Tap <b>+ Add</b> to make your own chip, like spinal erectors or forearms.</li>
       </ul>
+
+      <h3>Secondary muscles</h3>
+      <p>Compound lifts train more than one muscle. After picking the main muscle, tap any under <b>Also works ½</b>. Each set then counts as a full set for the main muscle and <b>half a set</b> (and half its effective reps) for the others. So 4 sets of bench with triceps ticked gives chest 4 sets and triceps 2. Leave it empty for isolation work like flyes. The session total at the top counts each real set once.</p>
 
       <h3>Rest-pause sets</h3>
       <p>Turn on <b>Rest-pause</b> and enter two numbers: the activation set (taken close to failure) and the total reps of the mini-sets after it. The activation set scores as normal. <b>Every mini-set rep counts</b>, because after short rests the muscle is already fully working. RIR is for the activation set. The whole thing counts as one working set.</p>
@@ -459,7 +505,7 @@ footer svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;s
       <h3>Limits</h3>
       <ul>
         <li><b>Heavy sets are undercounted.</b> At about 80% of your max (a 5–8 rep weight), every rep counts, even well short of failure. The tool doesn't know the load, so a heavy triple at RIR 3 shows 2 when it's really closer to 3.</li>
-        <li><b>Weekly volume still matters.</b> Aim for about 10–16 hard sets per muscle per week alongside the session numbers.</li>
+        <li><b>Weekly volume still matters.</b> The <b>This week</b> card adds up hard sets (RIR 0–4) per muscle, Monday to Sunday. Aim for about 10–16. Going above that can still work, it just costs more recovery.</li>
         <li>Sets at RIR 3–4 still build muscle, just less per set.</li>
       </ul>
     </div>
@@ -533,11 +579,64 @@ var TRACK_MAX = 60;
 
 /* Started as the eight groups from IronLogWeb/lib/types.ts:95. Shoulders and Legs
    are now split — the three deltoid heads and quads/hams/glutes/calves are trained
-   and recovered separately, so each one carries its own 20–40 band. "Other" is last
-   on purpose: it is the catch-all fromCSV falls back to, and a lone chip on the
-   final row reads deliberate there in a way a lone "Calves" would not. */
+   and recovered separately, so each one carries its own session band. Muscles the
+   user adds (spinal erectors, forearms…) sit after the built-ins, and "Other" stays
+   last as the catch-all. */
 var MUSCLE_GROUPS = ["Chest","Back","Front Delt","Side Delt","Rear Delt","Biceps","Triceps",
                      "Quads","Hams","Glutes","Calves","Core","Other"];
+
+/* Secondary muscles: a set can also credit other muscles at half a set and half its
+   effective reps (bench = chest, + ½ triceps). Fractional counting of indirect work
+   is how the volume dose-response literature counts it too. The primary muscle
+   always gets full credit. */
+var SEC_WEIGHT = 0.5;
+function credits(s){
+  var out = [{m:s.m, w:1}], seen = {}; seen[s.m] = 1;
+  (s.sec || []).forEach(function(m){ if(!seen[m]){ seen[m] = 1; out.push({m:m, w:SEC_WEIGHT}); } });
+  return out;
+}
+/* 2.5 stays 2.5, 3.0 shows as 3 */
+function fmtN(n){ return String(Math.round(n * 10) / 10); }
+
+/* Weekly hard sets per muscle, Monday to Sunday. "Hard set" = a counted set (RIR 0–4). */
+var WK_LOW = 10, WK_HIGH = 16, WK_TRACK = 24;
+function weekBand(n){
+  if(n <= 0) return "none";
+  if(n < WK_LOW) return "under";
+  if(n <= WK_HIGH) return "hyper";
+  return "maint";   /* above range: amber, not red — more can still work, it just costs recovery */
+}
+var WK_LABEL = {none:"", under:"Below 10", hyper:"In range", maint:"Above 16"};
+
+/* ----------------------------------------------------------- custom muscles */
+var MKEY = "effreps.muscles.v1";
+var customMuscles = [];
+function loadCustom(){
+  try{
+    var a = JSON.parse(localStorage.getItem(MKEY) || "[]");
+    customMuscles = Array.isArray(a) ? a.filter(function(x){ return typeof x === "string" && x; }) : [];
+  }catch(e){ customMuscles = []; }
+}
+function saveCustom(){ try{ localStorage.setItem(MKEY, JSON.stringify(customMuscles)); }catch(e){} }
+function cleanName(s){ return String(s || "").replace(/[,|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 20); }
+function allMuscles(){
+  return MUSCLE_GROUPS.filter(function(m){ return m !== "Other"; }).concat(customMuscles, ["Other"]);
+}
+/* Case-insensitive match against everything known; null if it is new. */
+function knownName(name){
+  var known = allMuscles().concat(LEGACY_GROUPS), l = name.toLowerCase();
+  for(var i = 0; i < known.length; i++) if(known[i].toLowerCase() === l) return known[i];
+  return null;
+}
+/* Add a name as a custom muscle if nothing matches it. Returns the canonical name. */
+function adoptMuscle(name){
+  name = cleanName(name);
+  if(!name) return null;
+  var k = knownName(name);
+  if(k) return k;
+  customMuscles.push(name); saveCustom();
+  return name;
+}
 /* Days logged before the split still hold these names. They are never offered as
    chips again, but a backup must restore them as themselves -- there is no way to
    know which subgroup an old "Legs" set was, and silently dropping it into Other
@@ -547,9 +646,10 @@ var SHORT = {Triceps:"Triceps", Biceps:"Biceps"};
 
 /* =================================================================== state */
 var KEY = "effreps.v1";
-var data = {};          /* { "2026-09-15": [ {m,reps,rir,t} ] } */
+var data = {};          /* { "2026-09-15": [ {m,reps,rir,t,rp?,sec?} ] } */
 var viewDate = todayKey();
 var selMuscle = null, repsStr = "", selRir = null;
+var selSec = [];        /* secondary muscles for the next set; sticky like the muscle */
 var rpOn = false, rpStr = "", padTarget = "reps";   /* rest-pause entry */
 
 function todayKey(){ return keyOf(new Date()); }
@@ -647,17 +747,55 @@ function renderMuscles(){
   var box = document.getElementById("muscles");
   box.innerHTML = "";
   var list = sets(viewDate);
-  MUSCLE_GROUPS.forEach(function(m){
-    var er = 0;
-    list.forEach(function(s){ if(s.m === m){ var v = effectiveReps(s); if(v !== null) er += v; } });
+  var erBy = {};
+  list.forEach(function(s){
+    var v = effectiveReps(s);
+    if(v === null) return;
+    credits(s).forEach(function(c){ erBy[c.m] = (erBy[c.m] || 0) + v * c.w; });
+  });
+  allMuscles().forEach(function(m){
+    var er = erBy[m] || 0;
     var b = el("button", "chip" + (selMuscle === m ? " on" : ""));
     b.setAttribute("aria-pressed", selMuscle === m ? "true" : "false");
-    b.setAttribute("aria-label", m + (er > 0 ? ", " + er + " effective reps so far" : ""));
+    b.setAttribute("aria-label", m + (er > 0 ? ", " + fmtN(er) + " effective reps so far" : ""));
     b.appendChild(document.createTextNode(SHORT[m] || m));
-    if(er > 0){ b.appendChild(el("span", "n", er)); }
-    tap(b, function(){ selMuscle = m; renderMuscles(); renderLog(); });
+    if(er > 0){ b.appendChild(el("span", "n", fmtN(er))); }
+    tap(b, function(){
+      if(selMuscle !== m) selSec = [];       /* secondaries belong to one exercise */
+      selMuscle = m; renderMuscles(); renderSec(); renderLog();
+    });
     box.appendChild(b);
   });
+  var add = el("button", "chip add", "+ Add");
+  add.setAttribute("aria-label", "Add or remove your own muscles");
+  add.setAttribute("aria-haspopup", "dialog");
+  tap(add, openMuscleSheet);
+  box.appendChild(add);
+}
+
+/* "Also works ½" — optional, only once a primary muscle is picked */
+function renderSec(){
+  var wrap = document.getElementById("secWrap");
+  var box = document.getElementById("secChips");
+  box.innerHTML = "";
+  wrap.hidden = !selMuscle;
+  if(!selMuscle) return;
+  selSec = selSec.filter(function(m){ return m !== selMuscle; });
+  allMuscles().forEach(function(m){
+    if(m === selMuscle || m === "Other") return;
+    var on = selSec.indexOf(m) > -1;
+    var b = el("button", "mini" + (on ? " on" : ""), (on ? "½ " : "") + m);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.setAttribute("aria-label", m + " at half credit");
+    tap(b, function(){
+      var i = selSec.indexOf(m);
+      if(i > -1) selSec.splice(i, 1); else selSec.push(m);
+      renderSec(); renderLog();
+    });
+    box.appendChild(b);
+  });
+  document.getElementById("secHint").textContent =
+    selSec.length ? "each set adds ½ set to " + selSec.join(", ") : "optional, e.g. triceps on bench";
 }
 
 function renderPad(){
@@ -740,7 +878,7 @@ function renderLog(){
         : rpOn && !(rp > 0) ? "Enter mini-set reps" : "Pick RIR"));
   }
   document.getElementById("entryMeta").textContent =
-    selMuscle ? selMuscle + (repsStr ? " · " + repsStr + (rpOn && rpStr ? " + " + rpStr : "") + " reps" : "") + (selRir !== null ? " · RIR " + (selRir === MAX_RIR ? "5+" : selRir) : "") : "";
+    selMuscle ? selMuscle + (selSec.length ? " +½" : "") + (repsStr ? " · " + repsStr + (rpOn && rpStr ? " + " + rpStr : "") + " reps" : "") + (selRir !== null ? " · RIR " + (selRir === MAX_RIR ? "5+" : selRir) : "") : "";
 }
 
 function renderTotals(){
@@ -748,18 +886,21 @@ function renderTotals(){
   var box = document.getElementById("muscleTotals");
   box.innerHTML = "";
 
-  var map = {}, order = [];
+  /* Muscle rows include ½ credit from secondaries. The headline total and set
+     count are real sets only, so they don't grow just because a set was tagged. */
+  var map = {}, order = [], total = 0, nsets = 0;
   list.forEach(function(s){
     if(!isCountedSet(s)) return;                 /* RIR 5 is not a working set */
-    if(!map[s.m]){ map[s.m] = {m:s.m, er:0, sets:0}; order.push(s.m); }
-    map[s.m].sets += 1;
-    map[s.m].er += effectiveReps(s);
+    var v = effectiveReps(s);
+    total += v; nsets += 1;
+    credits(s).forEach(function(c){
+      if(!map[c.m]){ map[c.m] = {m:c.m, er:0, sets:0}; order.push(c.m); }
+      map[c.m].sets += c.w;
+      map[c.m].er += v * c.w;
+    });
   });
   var rows = order.map(function(m){ return map[m]; })
     .sort(function(a,b){ return b.er - a.er || b.sets - a.sets; });
-
-  var total = 0, nsets = 0;
-  rows.forEach(function(r){ total += r.er; nsets += r.sets; });
   document.getElementById("sessTot").textContent = total;
   var side = document.getElementById("sessSide");
   side.innerHTML = "";
@@ -788,13 +929,13 @@ function renderTotals(){
     name.appendChild(el("span", "badge", BAND_LABEL[band]));
     row.appendChild(name);
     var mer = el("div", "mer");
-    mer.appendChild(el("span", "v", r.er));
+    mer.appendChild(el("span", "v", fmtN(r.er)));
     mer.appendChild(el("span", "u", "ER"));
-    mer.appendChild(el("span", "sets", plural(r.sets, "set")));
+    mer.appendChild(el("span", "sets", fmtN(r.sets) + (r.sets === 1 ? " set" : " sets")));
     row.appendChild(mer);
     var track = el("div", "track");
     track.setAttribute("role", "img");
-    track.setAttribute("aria-label", r.er + " effective reps, " + BAND_LABEL[band]);
+    track.setAttribute("aria-label", fmtN(r.er) + " effective reps, " + BAND_LABEL[band]);
     track.appendChild(el("span", "zone"));
     var fill = el("span", "fill");
     fill.style.transform = "scaleX(" + Math.min(1, r.er / TRACK_MAX) + ")";
@@ -806,6 +947,65 @@ function renderTotals(){
     foot.appendChild(el("span", "t16", "16"));
     foot.appendChild(el("span", "t50", "50"));
     row.appendChild(foot);
+    box.appendChild(row);
+  });
+}
+
+/* The week shown is the Monday–Sunday week that holds the day being viewed, so
+   tapping back to last Thursday shows last week. */
+function weekKeys(k){
+  var d = parseKey(k), back = (d.getDay() + 6) % 7, out = [];
+  for(var i = 0; i < 7; i++) out.push(keyOf(new Date(d.getFullYear(), d.getMonth(), d.getDate() - back + i)));
+  return out;
+}
+function renderWeek(){
+  var keys = weekKeys(viewDate);
+  var box = document.getElementById("weekRows");
+  box.innerHTML = "";
+  var a = parseKey(keys[0]), z = parseKey(keys[6]);
+  document.getElementById("weekMeta").textContent =
+    a.getDate() + " " + MONS[a.getMonth()] + " – " + z.getDate() + " " + MONS[z.getMonth()];
+
+  var map = {}, order = [], days = 0;
+  keys.forEach(function(k){
+    var any = false;
+    sets(k).forEach(function(s){
+      if(!isCountedSet(s)) return;
+      any = true;
+      var v = effectiveReps(s);
+      credits(s).forEach(function(c){
+        if(!map[c.m]){ map[c.m] = {m:c.m, sets:0, er:0}; order.push(c.m); }
+        map[c.m].sets += c.w; map[c.m].er += v * c.w;
+      });
+    });
+    if(any) days++;
+  });
+  var rows = order.map(function(m){ return map[m]; })
+    .sort(function(x,y){ return y.sets - x.sets || y.er - x.er; });
+
+  if(!rows.length){
+    var e = el("div", "empty");
+    e.appendChild(el("b", "", "Nothing this week yet"));
+    e.appendChild(document.createTextNode("Hard sets (RIR 0–4) add up here per muscle, Monday to Sunday. Aim for " + WK_LOW + "–" + WK_HIGH + "."));
+    box.appendChild(e); return;
+  }
+  box.appendChild(el("div", "wsum", plural(days, "training day") + " · " + plural(rows.length, "muscle")));
+  rows.forEach(function(r){
+    var band = weekBand(r.sets);
+    var row = el("div", "wrow b-" + band);
+    row.appendChild(el("span", "wn", r.m));
+    var track = el("div", "wtrack");
+    track.setAttribute("role", "img");
+    track.setAttribute("aria-label", fmtN(r.sets) + " hard sets this week, " + WK_LABEL[band]);
+    track.appendChild(el("span", "zone"));
+    var fill = el("span", "fill");
+    fill.style.transform = "scaleX(" + Math.min(1, r.sets / WK_TRACK) + ")";
+    track.appendChild(fill);
+    row.appendChild(track);
+    var v = el("span", "wv");
+    v.appendChild(el("b", "", fmtN(r.sets)));
+    v.appendChild(document.createTextNode(r.sets === 1 ? " set" : " sets"));
+    row.appendChild(v);
     box.appendChild(row);
   });
 }
@@ -872,6 +1072,7 @@ function renderSets(){
     var what = el("div", "what");
     what.appendChild(el("span", "m", s.m));
     what.appendChild(el("span", "d", s.reps + (s.rp > 0 ? " + " + s.rp : "") + " reps · RIR " + (s.rir === MAX_RIR ? s.rir + "+" : s.rir) + (s.rp > 0 ? " · rest-pause" : "")));
+    if(s.sec && s.sec.length) what.appendChild(el("span", "d", "½ " + s.sec.join(", ")));
     row.appendChild(what);
     var er = el("span", "er");
     if(v === null){ er.textContent = "not counted"; }
@@ -935,8 +1136,8 @@ function renderBanner(){
 }
 
 function renderAll(){
-  renderWarning(); renderBanner(); renderDays(); renderMuscles(); renderPad(); renderReps();
-  renderRirs(); renderLog(); renderTotals(); renderClear(); renderSets();
+  renderWarning(); renderBanner(); renderDays(); renderMuscles(); renderSec(); renderPad(); renderReps();
+  renderRirs(); renderLog(); renderTotals(); renderWeek(); renderClear(); renderSets();
 }
 
 /* ------------------------------------------------------------------ toast
@@ -969,6 +1170,8 @@ tap(document.getElementById("logBtn"), function(){
   if(!data[k]) data[k] = [];
   var set = {m:selMuscle, reps:reps, rir:selRir, t:Date.now()};
   if(rpOn) set.rp = rp;
+  var sec = selSec.filter(function(m){ return m !== selMuscle; });
+  if(sec.length) set.sec = sec;
   data[k].push(set);
   viewDate = k;
   repsStr = ""; rpStr = ""; selRir = null;  /* muscle and rest-pause mode are sticky on purpose */
@@ -996,14 +1199,17 @@ tap(document.getElementById("boxMini"), function(){ padTarget = "rp"; renderReps
    `reps` and `rir` ride along because they are the only things actually stored;
    `effective` is derived and is there to be read, not to be trusted on the way
    back in. Restore recomputes it from reps and rir like everything else does. */
-var CSV_HEAD = "date,muscle,reps,rir,effective,restpause";
+/* `also` holds secondary muscles separated by "|". Custom muscle names travel in
+   the muscle columns, and restore adds any name it doesn't know as a custom chip. */
+var CSV_HEAD = "date,muscle,reps,rir,effective,restpause,also";
 
 function toCSV(d){
   var lines = [CSV_HEAD];
   Object.keys(d).sort().forEach(function(k){
     (d[k] || []).forEach(function(s){
       var v = effectiveReps(s);
-      lines.push([k, s.m, s.reps, s.rir, v === null ? "" : v, s.rp > 0 ? s.rp : ""].join(","));
+      lines.push([k, s.m, s.reps, s.rir, v === null ? "" : v, s.rp > 0 ? s.rp : "",
+                  (s.sec || []).join("|")].join(","));
     });
   });
   return lines.join("\n");
@@ -1025,18 +1231,16 @@ function fromCSV(text){
     var name = c[1].trim();
     var reps = parseInt(c[2], 10), rir = parseInt(c[3], 10);
     if(!(reps > 0) || !(rir >= 0) || rir > MAX_RIR) return;
-    /* match the muscle by name, case-insensitively, against the current chips
-       plus the pre-split names; anything unrecognised lands in Other rather
-       than inventing a group that has no chip */
-    var m = "Other";
-    var known = MUSCLE_GROUPS.concat(LEGACY_GROUPS);
-    for(var i = 0; i < known.length; i++){
-      if(known[i].toLowerCase() === name.toLowerCase()){ m = known[i]; break; }
-    }
+    /* match the muscle by name, case-insensitively; a name with no chip yet
+       (a custom muscle from another phone) comes back as a custom chip */
+    var m = adoptMuscle(name) || "Other";
     if(!out[date]) out[date] = [];
     var set = {m:m, reps:reps, rir:rir, t:++rows};
     var rp = parseInt(c[5], 10);             /* sixth column: rest-pause mini-set reps */
     if(rp > 0) set.rp = rp;
+    var sec = (c[6] || "").split("|").map(adoptMuscle)
+      .filter(function(x){ return x && x !== m; });
+    if(sec.length) set.sec = sec;
     out[date].push(set);
   });
   return rows ? out : null;
@@ -1092,6 +1296,61 @@ tap(document.getElementById("histBtn"), function(){
   });
 });
 
+/* ------------------------------------------------------------ your muscles
+   Removing a muscle only removes its chip. Sets already logged keep the name and
+   still show in the day and week totals. */
+function openMuscleSheet(){
+  openSheet("Your muscles", function(sheet){
+    var form = el("form", "addrow");
+    var inp = el("input");
+    inp.type = "text"; inp.maxLength = 20; inp.placeholder = "e.g. Spinal erectors";
+    inp.setAttribute("aria-label", "New muscle name");
+    inp.autocapitalize = "words";
+    var go = el("button", "btn primary", "Add");
+    go.type = "submit";
+    var msg = el("p", "note");
+    form.appendChild(inp); form.appendChild(go);
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var n = cleanName(inp.value);
+      if(!n){ inp.focus(); return; }
+      var k = knownName(n);
+      if(k){ msg.textContent = k + " is already a chip."; return; }
+      adoptMuscle(n);
+      selMuscle = n; selSec = [];
+      closeModal(); renderAll();
+      showToast("Added " + n);
+    });
+    sheet.appendChild(form);
+    sheet.appendChild(msg);
+
+    if(customMuscles.length){
+      customMuscles.forEach(function(m){
+        var row = el("div", "setrow");
+        row.style.gridTemplateColumns = "1fr auto";
+        row.appendChild(el("span", "m", m));
+        var del = el("button", "del");
+        del.setAttribute("aria-label", "Remove " + m);
+        del.appendChild(svg(ICON_X));
+        tap(del, function(){
+          customMuscles = customMuscles.filter(function(x){ return x !== m; });
+          saveCustom();
+          if(selMuscle === m) selMuscle = null;
+          selSec = selSec.filter(function(x){ return x !== m; });
+          closeModal(); renderAll();
+          showToast("Removed " + m, function(){
+            customMuscles.push(m); saveCustom(); renderAll();
+          });
+        });
+        row.appendChild(del);
+        sheet.appendChild(row);
+      });
+      sheet.appendChild(el("p", "note", "Removing a muscle hides its chip. Sets you already logged keep it."));
+    }
+    setTimeout(function(){ inp.focus(); }, 50);
+  });
+}
+
 /* -------------------------------------------------------- backup / restore */
 tap(document.getElementById("backupBtn"), function(){
   openSheet("Backup / restore", function(sheet){
@@ -1100,7 +1359,7 @@ tap(document.getElementById("backupBtn"), function(){
     ta.value = toCSV(data);
     sheet.appendChild(ta);
     sheet.appendChild(el("p", "note",
-      "One line per set: date, muscle, reps, RIR, effective reps, and mini-set reps for a rest-pause set. Copy it " +
+      "One line per set: date, muscle, reps, RIR, effective reps, mini-set reps for a rest-pause set, and any ½-credit muscles. Your own muscles come back with it. Copy it " +
       "somewhere safe (Notes, or an email to yourself) and paste it back here " +
       "to bring the days back if the phone ever clears them. Restore replaces a " +
       "whole day at a time: if a date is in the text, the sets here for that " +
@@ -1138,6 +1397,13 @@ tap(document.getElementById("backupBtn"), function(){
         if(Array.isArray(inc[k]) && inc[k].length){ data[k] = inc[k]; days++; }
       });
       if(!days){ restore.textContent = "Nothing readable"; return; }
+      /* an old JSON backup can carry names with no chip; give them one */
+      Object.keys(inc).forEach(function(k){
+        (inc[k] || []).forEach(function(s){
+          if(s && s.m) adoptMuscle(s.m);
+          if(s && s.sec) s.sec.forEach(adoptMuscle);
+        });
+      });
       save(); renderAll();
       restore.textContent = "Restored " + plural(days, "day");
     });
@@ -1149,6 +1415,7 @@ tap(document.getElementById("backupBtn"), function(){
 /* ===================================================================== boot */
 probeStorage();
 load();
+loadCustom();
 renderAll();
 
 /* A phone left open overnight should not still be sitting on yesterday. If the
